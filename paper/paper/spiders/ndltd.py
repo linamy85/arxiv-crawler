@@ -63,9 +63,30 @@ class NdltdSpider(scrapy.Spider):
 
     def parse_pages(self, response):
         # parse papers in multiple pages.
-        yield {"text": response.xpath(
-            '//table[@class="tableoutsimplefmt2"]/tr/td/a'
-        ).extract()}
+        article = response.xpath(
+            '//table[@class="tableoutsimplefmt2"]/tr/td/a[@class="slink"]'
+        )
+        for idx in range(len(article)):
+            link = article[idx].xpath('@href').extract_first()
+            title = article[idx].xpath('span').extract_first()
+            req = scrapy.Request(self.rooturl + link,
+                                 callback=self.parse_article)
+            req.meta['title'] = title
+            yield req
 
+    def parse_article(self, response):
+        # parse single article.
+        chinese = response.xpath(
+            '//td[@class="stdncl2"]/div/text()'
+        )[0].extract()
+        english = response.xpath(
+            '//td[@class="stdncl2"]/div/text()'
+        )[1].extract()
+
+        return {"post": {
+            "title": response.meta['title'],
+            "Chinese": chinese,
+            "English": english
+        }}
 
 
