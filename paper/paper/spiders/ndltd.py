@@ -6,6 +6,7 @@ import scrapy
 import pickle
 import sys
 from selenium import webdriver
+import time
 
 
 def user_select_category(list, layer):
@@ -39,6 +40,10 @@ class NdltdSpider(scrapy.Spider):
         self.chrome = webdriver.Chrome()
         self.chrome.get(self.start_urls[0])
 
+    def __del__(self):
+        self.chrome.close()
+        print("Chrome window closed.")
+
     def parse(self, response):
         self.chrome.get(self.start_urls[0])
         category_url = self.chrome.find_element_by_xpath(
@@ -46,6 +51,7 @@ class NdltdSpider(scrapy.Spider):
         ).get_attribute('href')
         print("found category_url: %s" % category_url)
         res = self.select_category(category_url, 0)
+        # self.chrome.close()
         return res
 
     def select_category(self, abs_url, layer):
@@ -120,6 +126,7 @@ class NdltdSpider(scrapy.Spider):
                 print("%%%%%%%% No page left. %%%%%%%%%%")
                 break
 
+        time.sleep(1)
         # starts parsing pages
         for url in url_list:
             res = self.parse_article(url)
