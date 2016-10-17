@@ -7,6 +7,7 @@ import pickle
 import sys
 from selenium import webdriver
 import time
+from selenium.common.exceptions import NoSuchElementException
 
 
 def user_select_category(list, layer):
@@ -147,21 +148,31 @@ class NdltdSpider(scrapy.Spider):
         print(en_title)
 
         # parse single article.
-        chinese = self.chrome.find_element_by_xpath(
-            '(//td[@class="stdncl2"])[1]/div'
-        ).get_attribute('innerHTML')
+        # chinese = self.chrome.find_element_by_xpath(
+            # '(//td[@class="stdncl2"])[1]/div'
+        # ).get_attribute('innerHTML')
 
         english = self.chrome.find_element_by_xpath(
             '(//td[@class="stdncl2"])[2]/div'
         ).get_attribute('innerHTML')
 
+        try:
+            keyword = self.chrome.find_element_by_xpath(
+                '//table[@id="format0_disparea"]/tbody/tr/'
+                'td[preceding-sibling::th[contains(.,"外文關鍵詞")]]'
+            ).text
+        except NoSuchElementException:
+            keyword = ""
+            print("No such element exception....")
+        finally:
+            print(">>>>>>> " + keyword)
+
         # self.chrome.back()
 
         return {"post": {
-            "Chinese_title": ch_title,
-            "Chinese_abstract": chinese,
             "English_title": en_title,
-            "English_abstract": english
+            "English_abstract": english,
+            "keyword": keyword
         }}
 
 
