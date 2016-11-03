@@ -97,82 +97,115 @@ class NdltdSpider(scrapy.Spider):
         print(abs_url)
         print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
         self.chrome.get(abs_url)
-        
-        url_list = []
 
-        # parse papers in multiple pages.
-        while True:
-            # Wait until 5 sec or page loaded.
-            # self.chrome.manage().timeouts().pageLoadTimeout(5, TimeUnit.SECONDS);
-            article = self.chrome.find_elements_by_xpath(
-                '//table[@class="tableoutsimplefmt2"]'
-                '/tbody/tr/td/a[@class="slink"]'
-            )
-            print(article)
-            for a in article:
-                link = a.get_attribute('href')
-                # title = a.find_element_by_xpath('span').text
-                # print("$$$ title %s" % title)
-                # a.click()
-                # res = self.parse_article(link, title)
-                # yield res
-                url_list.append(link)
+        article = self.chrome.find_elements_by_xpath(
+            '//table[@class="tableoutsimplefmt2"]'
+            '/tbody/tr/td/a[@class="slink"]'
+        )
+        if len(article) < 1:
+            print("Error: no init list of articles")
+            return None
+        else:
+            link = article[0].get_attribute('href')
+            res = self.parse_article(link)
+            return res
             
-            # click next page button
-            try:
-                self.chrome.find_element_by_xpath(
-                    '//input[@name="gonext"]'
-                ).click()
-            except:
-                print("%%%%%%%% No page left. %%%%%%%%%%")
-                break
+        
+        # url_list = []
 
-        time.sleep(1)
-        # starts parsing pages
-        for url in url_list:
-            res = self.parse_article(url)
-            yield res
+        # # parse papers in multiple pages.
+        # while True:
+            # # Wait until 5 sec or page loaded.
+            # # self.chrome.manage().timeouts().pageLoadTimeout(5, TimeUnit.SECONDS);
+            # article = self.chrome.find_elements_by_xpath(
+                # '//table[@class="tableoutsimplefmt2"]'
+                # '/tbody/tr/td/a[@class="slink"]'
+            # )
+            # print(article)
+            # for a in article:
+                # link = a.get_attribute('href')
+                # # title = a.find_element_by_xpath('span').text
+                # # print("$$$ title %s" % title)
+                # # a.click()
+                # # res = self.parse_article(link, title)
+                # # yield res
+                # url_list.append(link)
+            
+            # # click next page button
+            # try:
+                # self.chrome.find_element_by_xpath(
+                    # '//input[@name="gonext"]'
+                # ).click()
+            # except:
+                # print("%%%%%%%% No page left. %%%%%%%%%%")
+                # break
+
+        # time.sleep(1)
+        # # starts parsing pages
+        # for url in url_list:
+            # res = self.parse_article(url)
+            # yield res
 
     def parse_article(self, abs_url):
         self.chrome.get(abs_url)
         print(abs_url)
-        # get titles
-        ch_title = self.chrome.find_element_by_xpath(
-            '//table[@id="format0_disparea"]/tbody/tr[4]/td'
-        ).text
-        print(ch_title)
 
-        en_title = self.chrome.find_element_by_xpath(
-            '//table[@id="format0_disparea"]/tbody/tr[5]/td'
-        ).text
-        print(en_title)
-
-        # parse single article.
-        # chinese = self.chrome.find_element_by_xpath(
-            # '(//td[@class="stdncl2"])[1]/div'
-        # ).get_attribute('innerHTML')
-
-        english = self.chrome.find_element_by_xpath(
-            '(//td[@class="stdncl2"])[2]/div'
-        ).get_attribute('innerHTML')
-
-        try:
-            keyword = self.chrome.find_element_by_xpath(
-                '//table[@id="format0_disparea"]/tbody/tr/'
-                'td[preceding-sibling::th[contains(.,"外文關鍵詞")]]'
+        while True:
+            # get titles
+            ch_title = self.chrome.find_element_by_xpath(
+                '//table[@id="format0_disparea"]/tbody/tr[4]/td'
             ).text
+            print(ch_title)
+
+            en_title = self.chrome.find_element_by_xpath(
+                '//table[@id="format0_disparea"]/tbody/tr[5]/td'
+            ).text
+            print(en_title)
+
+            # parse single article.
+            # chinese = self.chrome.find_element_by_xpath(
+                # '(//td[@class="stdncl2"])[1]/div'
+            # ).get_attribute('innerHTML')
+
+            try:
+                english = self.chrome.find_element_by_xpath(
+                    '(//td[@class="stdncl2"])[2]/div'
+                ).get_attribute('innerHTML')
+            except NoSuchElementException:
+                print("No english abstract....")
+                self.JumpNextArticle()
+                continue
+
+
+            try:
+                keyword = self.chrome.find_element_by_xpath(
+                    '//table[@id="format0_disparea"]/tbody/tr/'
+                    'td[preceding-sibling::th[contains(.,"外文關鍵詞")]]'
+                ).text
+            except NoSuchElementException:
+                keyword = ""
+                print("No such element exception....")
+            finally:
+                print(">>>>>>> " + keyword)
+
+            # self.chrome.back()
+
+            yield {"post": {
+                "English_title": en_title,
+                "English_abstract": english,
+                "keyword": keyword
+            }}
+
+            self.JumpNextArticle()
+
+    def JumpNextArticle(self):
+        try:
+            self.chrome.find_element_by_xpath(
+                '//table[@class="gs32_font11_table"]/tbody/'
+                'tr/td[1]/table/tbody/tr/td[4]/input'
+            ).click()
         except NoSuchElementException:
-            keyword = ""
-            print("No such element exception....")
-        finally:
-            print(">>>>>>> " + keyword)
-
-        # self.chrome.back()
-
-        return {"post": {
-            "English_title": en_title,
-            "English_abstract": english,
-            "keyword": keyword
-        }}
+            print("\n\n>>>>> End of all articles.\n")
+            return None
 
 
