@@ -16,13 +16,10 @@ class ArxivSpider(scrapy.Spider):
         if len(start_str) > 0:
             start = int(start_str)
 
-        max_str = input(">>> Max index (def 10000): ")
-        max_id = 10000
+        max_str = input(">>> Max index (def 20000): ")
+        max_id = 20000
         if len(max_str) > 0:
             max_id = int(max_str)
-        if max_id > 10000:
-            max_id = 10000
-            print("Valid max value is 10000.")
 
         print("parsing range: %d - %d" % (start, max_id))
 
