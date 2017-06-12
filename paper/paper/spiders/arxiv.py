@@ -23,7 +23,7 @@ class ArxivSpider(scrapy.Spider):
 
         print("parsing range: %d - %d" % (start, max_id))
 
-        step_n = 100
+        step_n = 200
         count = start
         for id in range(math.floor((max_id - start + 1) / step_n) + 1):
             limit = min(max_id - count + 1, step_n)
@@ -46,6 +46,8 @@ class ArxivSpider(scrapy.Spider):
             return None
         for obj in list:
             yield {"post": {
+                "updated": obj.xpath('./d:updated/text()')[0].extract(),
+                "published": obj.xpath('./d:published/text()')[0].extract(),
                 "title": obj.xpath('./d:title/text()')[0].extract(),
                 "abstract": obj.xpath('./d:summary/text()')[0].extract()
             }}
