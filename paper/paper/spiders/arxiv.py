@@ -49,6 +49,8 @@ class ArxivSpider(scrapy.Spider):
                 "updated": obj.xpath('./d:updated/text()')[0].extract(),
                 "published": obj.xpath('./d:published/text()')[0].extract(),
                 "title": obj.xpath('./d:title/text()')[0].extract(),
-                "abstract": obj.xpath('./d:summary/text()')[0].extract()
+                "abstract": obj.xpath('./d:summary/text()')[0].extract(),
+                "author": [ author.xpath('./d:name/text()')[0].extract() 
+                            for author in obj.xpath('./d:author') ]
             }}
 
